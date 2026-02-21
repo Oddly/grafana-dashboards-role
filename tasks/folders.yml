@@ -1,0 +1,43 @@
+---
+- name: Collect all folders from enabled services
+  ansible.builtin.set_fact:
+    _all_folders: >-
+      {{ _enabled_services
+         | map('extract', service_map)
+         | map(attribute='folders')
+         | flatten
+         | unique
+         | list }}
+
+- name: Create top-level folders
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/folders"
+    method: POST
+    headers:
+      Authorization: "{{ _grafana_auth_header }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      uid: "{{ item.uid }}"
+      title: "{{ item.title }}"
+    status_code: [200, 409, 412]
+  loop: "{{ _all_folders | rejectattr('parent_uid', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.uid }}"
+
+- name: Create child folders
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/folders"
+    method: POST
+    headers:
+      Authorization: "{{ _grafana_auth_header }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      uid: "{{ item.uid }}"
+      title: "{{ item.title }}"
+      parentUid: "{{ item.parent_uid }}"
+    status_code: [200, 409, 412]
+  loop: "{{ _all_folders | selectattr('parent_uid', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.uid }}"

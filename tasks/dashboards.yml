@@ -1,0 +1,16 @@
+---
+- name: Collect all dashboards from enabled services
+  ansible.builtin.set_fact:
+    _all_dashboards: >-
+      {{ _enabled_services
+         | map('extract', service_map)
+         | map(attribute='dashboards')
+         | flatten
+         | list }}
+
+- name: Deploy each dashboard
+  ansible.builtin.include_tasks: _deploy_one.yml
+  loop: "{{ _all_dashboards }}"
+  loop_control:
+    loop_var: _dash
+    label: "{{ _dash.file }}"

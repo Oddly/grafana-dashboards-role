@@ -1,0 +1,77 @@
+---
+# --- Elasticsearch datasource ---
+
+- name: Check if ES datasource exists
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/datasources/name/{{ datasource_def.name | urlencode }}"
+    method: GET
+    headers:
+      Authorization: "{{ _grafana_auth_header }}"
+    status_code: [200, 404]
+  register: _ds_check
+  check_mode: false
+
+- name: Create ES datasource
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/datasources"
+    method: POST
+    headers:
+      Authorization: "{{ _grafana_auth_header }}"
+      Content-Type: application/json
+    body_format: json
+    body: "{{ datasource_def }}"
+    status_code: [200]
+  when: _ds_check.status == 404
+
+# --- Infinity datasources (optional) ---
+
+- name: Install Infinity datasources
+  when: grafana_dashboards_infinity | bool
+  block:
+    - name: Check Infinity plugin is installed
+      ansible.builtin.uri:
+        url: "{{ grafana_url }}/api/plugins/yesoreyeram-infinity-datasource/settings"
+        method: GET
+        headers:
+          Authorization: "{{ _grafana_auth_header }}"
+        status_code: [200]
+      register: _inf_plugin
+      failed_when: false
+      check_mode: false
+
+    - name: Warn if Infinity plugin is missing
+      ansible.builtin.debug:
+        msg: >-
+          WARNING: Infinity plugin not found. Install it with:
+          grafana-cli plugins install yesoreyeram-infinity-datasource
+          then restart Grafana. Skipping Infinity datasource creation.
+      when: _inf_plugin.status != 200
+
+    - name: Check Infinity datasources
+      ansible.builtin.uri:
+        url: "{{ grafana_url }}/api/datasources/name/{{ item.value.name | urlencode }}"
+        method: GET
+        headers:
+          Authorization: "{{ _grafana_auth_header }}"
+        status_code: [200, 404]
+      loop: "{{ infinity_datasources | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      register: _inf_ds_checks
+      when: _inf_plugin.status == 200
+      check_mode: false
+
+    - name: Create missing Infinity datasources
+      ansible.builtin.uri:
+        url: "{{ grafana_url }}/api/datasources"
+        method: POST
+        headers:
+          Authorization: "{{ _grafana_auth_header }}"
+          Content-Type: application/json
+        body_format: json
+        body: "{{ item.item.value }}"
+        status_code: [200]
+      loop: "{{ _inf_ds_checks.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item.key | default('skip') }}"
+      when: _inf_plugin.status == 200 and item.status == 404

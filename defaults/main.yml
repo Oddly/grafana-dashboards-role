@@ -1,0 +1,40 @@
+---
+# Grafana connection
+grafana_url: "http://localhost:3000"
+grafana_auth: "admin:admin"
+grafana_api_key: ""
+
+# Elasticsearch connection (single datasource for all dashboards)
+elasticsearch_url: "https://localhost:9200"
+elasticsearch_user: "elastic"
+elasticsearch_password: ""
+elasticsearch_tls_skip_verify: false
+elasticsearch_index_pattern: "metrics-*,logs-*"
+
+# Infinity plugin — provides direct API access panels (cluster health,
+# index listings, task queues, etc.). Disabled by default because it
+# requires network access from Grafana to each service API.
+grafana_dashboards_infinity: false
+infinity_elasticsearch_url: "{{ elasticsearch_url }}"
+infinity_elasticsearch_user: "{{ elasticsearch_user }}"
+infinity_elasticsearch_password: "{{ elasticsearch_password }}"
+infinity_elasticsearch_tls_skip_verify: "{{ elasticsearch_tls_skip_verify }}"
+infinity_logstash_url: "http://localhost:9600"
+infinity_grafana_url: "{{ grafana_url }}"
+infinity_grafana_user: "{{ grafana_auth.split(':')[0] }}"
+infinity_grafana_password: "{{ grafana_auth.split(':')[1] }}"
+
+# Health detection: minutes without data before showing "unknown"
+health_stale_minutes: 5
+
+# Path to parent directory containing dashboards-<service>/ repos
+grafana_dashboards_path: "{{ playbook_dir }}/.."
+
+# Service toggles
+grafana_dashboards_elasticsearch: true
+grafana_dashboards_logstash: true
+grafana_dashboards_grafana: true
+grafana_dashboards_linux: true
+grafana_dashboards_network: true
+grafana_dashboards_netflow: false
+grafana_dashboards_security: true

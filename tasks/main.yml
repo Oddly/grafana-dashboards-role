@@ -1,0 +1,35 @@
+---
+- name: Load dashboard registry
+  ansible.builtin.include_vars:
+    file: dashboards.yml
+
+- name: Set auth header (API key takes precedence)
+  ansible.builtin.set_fact:
+    _grafana_auth_header: >-
+      {{ (grafana_api_key | length > 0)
+         | ternary('Bearer ' + grafana_api_key,
+                   'Basic ' + (grafana_auth | b64encode)) }}
+
+- name: Build enabled services list
+  ansible.builtin.set_fact:
+    _enabled_services: []
+
+- name: Check each service toggle
+  ansible.builtin.set_fact:
+    _enabled_services: "{{ _enabled_services + ([item.key] if lookup('vars', item.value.enabled_var) | bool else []) }}"
+  loop: "{{ service_map | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Show enabled services
+  ansible.builtin.debug:
+    msg: "Enabled services: {{ _enabled_services }}"
+
+- name: Create datasources
+  ansible.builtin.include_tasks: datasources.yml
+
+- name: Create folder hierarchy
+  ansible.builtin.include_tasks: folders.yml
+
+- name: Deploy dashboards
+  ansible.builtin.include_tasks: dashboards.yml

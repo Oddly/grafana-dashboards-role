@@ -1,0 +1,20 @@
+---
+- name: "Load {{ _dash.file }}"
+  ansible.builtin.set_fact:
+    _dash_json: "{{ lookup('file', _dash_path) | from_json }}"
+  vars:
+    _dash_path: "{{ grafana_dashboards_path }}/dashboards-{{ _dash.service }}/dashboards/{{ _dash.file }}"
+
+- name: "Deploy {{ _dash.file }}"
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/dashboards/db"
+    method: POST
+    headers:
+      Authorization: "{{ _grafana_auth_header }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      dashboard: "{{ _dash_json | combine({'id': None, 'version': None}) }}"
+      folderUid: "{{ _dash.folder_uid }}"
+      overwrite: true
+    status_code: [200]

@@ -1,0 +1,134 @@
+---
+datasource_def:
+  name: "Elasticsearch data"
+  type: elasticsearch
+  access: proxy
+  url: "{{ elasticsearch_url }}"
+  database: "{{ elasticsearch_index_pattern }}"
+  basicAuth: true
+  basicAuthUser: "{{ elasticsearch_user }}"
+  jsonData:
+    esVersion: "8.0.0"
+    includeFrozen: false
+    maxConcurrentShardRequests: 5
+    timeField: "@timestamp"
+    tlsSkipVerify: "{{ elasticsearch_tls_skip_verify }}"
+  secureJsonData:
+    basicAuthPassword: "{{ elasticsearch_password }}"
+
+infinity_datasources:
+  inf_es:
+    name: "ES Infinity API"
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: "{{ infinity_elasticsearch_url }}"
+    basicAuth: true
+    basicAuthUser: "{{ infinity_elasticsearch_user }}"
+    jsonData:
+      tlsSkipVerify: "{{ infinity_elasticsearch_tls_skip_verify }}"
+    secureJsonData:
+      basicAuthPassword: "{{ infinity_elasticsearch_password }}"
+  inf_gf:
+    name: "Grafana Infinity API"
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: "{{ infinity_grafana_url }}"
+    basicAuth: true
+    basicAuthUser: "{{ infinity_grafana_user }}"
+    jsonData:
+      allowedHosts:
+        - "{{ infinity_grafana_url }}"
+      auth_method: basicAuth
+    secureJsonData:
+      basicAuthPassword: "{{ infinity_grafana_password }}"
+  inf_ls:
+    name: "LS Infinity API"
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: "{{ infinity_logstash_url }}"
+    basicAuth: false
+    jsonData:
+      oauthPassThru: false
+
+service_map:
+  elasticsearch:
+    enabled_var: grafana_dashboards_elasticsearch
+    folders:
+      - { uid: services, title: Services }
+      - { uid: elasticsearch, title: Elasticsearch, parent_uid: services }
+    dashboards:
+      - { service: elasticsearch, file: ES-00-Service-Overview.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-01-Cluster-Health.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-02-Index-Overview.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-03-Index-Pattern.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-04-Index-Detail.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-05-Shards-Overview.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-06-Ingest-Pipelines.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-07-Pipeline-Detail.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-08-Tasks-Queue.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-09-Host-Metrics.json, folder_uid: elasticsearch }
+      - { service: elasticsearch, file: ES-10-Cluster-Internals.json, folder_uid: elasticsearch }
+
+  logstash:
+    enabled_var: grafana_dashboards_logstash
+    folders:
+      - { uid: services, title: Services }
+      - { uid: logstash, title: Logstash, parent_uid: services }
+    dashboards:
+      - { service: logstash, file: LS-00-Service-Overview.json, folder_uid: logstash }
+      - { service: logstash, file: LS-01-Pipeline-Metrics.json, folder_uid: logstash }
+      - { service: logstash, file: LS-02-Pipeline-Detail.json, folder_uid: logstash }
+      - { service: logstash, file: LS-03-Node-Performance.json, folder_uid: logstash }
+      - { service: logstash, file: LS-04-Pipeline-Tuning.json, folder_uid: logstash }
+      - { service: logstash, file: LS-09-Host-Metrics.json, folder_uid: logstash }
+
+  grafana:
+    enabled_var: grafana_dashboards_grafana
+    folders:
+      - { uid: services, title: Services }
+      - { uid: grafana, title: Grafana, parent_uid: services }
+    dashboards:
+      - { service: grafana, file: GF-00-Service-Overview.json, folder_uid: grafana }
+      - { service: grafana, file: GF-01-Grafana-Metrics.json, folder_uid: grafana }
+      - { service: grafana, file: GF-02-Host-Metrics.json, folder_uid: grafana }
+
+  linux:
+    enabled_var: grafana_dashboards_linux
+    folders:
+      - { uid: linux, title: Linux }
+    dashboards:
+      - { service: linux, file: LX-00-Linux-Overview.json, folder_uid: linux }
+      - { service: linux, file: LX-01-Linux-Metrics.json, folder_uid: linux }
+      - { service: linux, file: LX-02-CPU-Scheduler.json, folder_uid: linux }
+      - { service: linux, file: LX-03-Memory-Swap.json, folder_uid: linux }
+      - { service: linux, file: LX-04-Disk-IO.json, folder_uid: linux }
+      - { service: linux, file: LX-05-Network-Protocols.json, folder_uid: linux }
+      - { service: linux, file: LX-06-Systemd-Services.json, folder_uid: linux }
+      - { service: linux, file: LX-07-Process-System.json, folder_uid: linux }
+      - { service: linux, file: LX-08-Resource-Efficiency.json, folder_uid: linux }
+
+  network:
+    enabled_var: grafana_dashboards_network
+    folders:
+      - { uid: network, title: Network }
+    dashboards:
+      - { service: network, file: NT-00-Network-Overview.json, folder_uid: network }
+      - { service: network, file: NT-01-Network-Traffic.json, folder_uid: network }
+      - { service: network, file: NT-02-DNS.json, folder_uid: network }
+      - { service: network, file: NT-03-TLS-Encryption.json, folder_uid: network }
+      - { service: network, file: NT-04-Infrastructure-Traffic.json, folder_uid: network }
+
+  netflow:
+    enabled_var: grafana_dashboards_netflow
+    folders:
+      - { uid: network, title: Network }
+    dashboards:
+      - { service: network, file: NT-05-NetFlow-Analytics.json, folder_uid: network }
+
+  security:
+    enabled_var: grafana_dashboards_security
+    folders:
+      - { uid: security, title: Security }
+    dashboards:
+      - { service: security, file: AU-01-Security-Audit.json, folder_uid: security }
+      - { service: security, file: JD-01-Journal-Logs.json, folder_uid: security }
