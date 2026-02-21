@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: "{{ playbook_dir }}"
+      vars:
+        grafana_url: "http://grafana.example.com:3000"
+        grafana_auth: "admin:changeme"
+        elasticsearch_url: "https://es.example.com:9200"
+        elasticsearch_user: "elastic"
+        elasticsearch_password: "changeme"
+        elasticsearch_tls_skip_verify: true
+        grafana_dashboards_infinity: false
+        infinity_elasticsearch_tls_skip_verify: true
