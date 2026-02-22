@@ -24,6 +24,8 @@
   loop: "{{ _all_folders | rejectattr('parent_uid', 'defined') | list }}"
   loop_control:
     label: "{{ item.uid }}"
+  register: _folder_result
+  changed_when: _folder_result.status == 200
 
 - name: Create child folders
   ansible.builtin.uri:
@@ -41,3 +43,5 @@
   loop: "{{ _all_folders | selectattr('parent_uid', 'defined') | list }}"
   loop_control:
     label: "{{ item.uid }}"
+  register: _child_folder_result
+  changed_when: _child_folder_result.status == 200

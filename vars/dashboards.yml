@@ -8,7 +8,7 @@ datasource_def:
   basicAuth: true
   basicAuthUser: "{{ elasticsearch_user }}"
   jsonData:
-    esVersion: "8.0.0"
+    esVersion: "{{ elasticsearch_version }}"
     includeFrozen: false
     maxConcurrentShardRequests: 5
     timeField: "@timestamp"

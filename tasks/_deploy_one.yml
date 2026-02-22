@@ -1,20 +1,60 @@
 ---
-- name: "Load {{ _dash.file }}"
-  ansible.builtin.set_fact:
-    _dash_json: "{{ lookup('file', _dash_path) | from_json }}"
+- name: "Deploy {{ _dash.file }}"
   vars:
     _dash_path: "{{ grafana_dashboards_path }}/dashboards-{{ _dash.service }}/dashboards/{{ _dash.file }}"
+  block:
+    - name: "Check dashboard file exists — {{ _dash.file }}"
+      ansible.builtin.stat:
+        path: "{{ _dash_path }}"
+      register: _dash_stat
 
-- name: "Deploy {{ _dash.file }}"
-  ansible.builtin.uri:
-    url: "{{ grafana_url }}/api/dashboards/db"
-    method: POST
-    headers:
-      Authorization: "{{ _grafana_auth_header }}"
-      Content-Type: application/json
-    body_format: json
-    body:
-      dashboard: "{{ _dash_json | combine({'id': None, 'version': None}) }}"
-      folderUid: "{{ _dash.folder_uid }}"
-      overwrite: true
-    status_code: [200]
+    - name: "Fail if dashboard file is missing — {{ _dash.file }}"
+      ansible.builtin.fail:
+        msg: "Dashboard file not found: {{ _dash_path }}"
+      when: not _dash_stat.stat.exists
+
+    - name: "Load {{ _dash.file }}"
+      ansible.builtin.set_fact:
+        _dash_json: "{{ lookup('file', _dash_path) | from_json }}"
+
+    - name: "Apply colour palette — {{ _dash.file }}"
+      vars:
+        _src: "{{ _source_palette }}"
+        _dst: "{{ _palettes[grafana_dashboards_palette] }}"
+        _json_str: "{{ _dash_json | to_json }}"
+      ansible.builtin.set_fact:
+        _dash_json: >-
+          {{ _json_str
+             | replace(_src.blue,   _dst.blue)
+             | replace(_src.cyan,   _dst.cyan)
+             | replace(_src.green,  _dst.green)
+             | replace(_src.yellow, _dst.yellow)
+             | replace(_src.red,    _dst.red)
+             | replace(_src.purple, _dst.purple)
+             | replace(_src.grey,   _dst.grey)
+             | from_json }}
+      when: grafana_dashboards_palette | length > 0
+
+    - name: "Push {{ _dash.file }}"
+      ansible.builtin.uri:
+        url: "{{ grafana_url }}/api/dashboards/db"
+        method: POST
+        headers:
+          Authorization: "{{ _grafana_auth_header }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          dashboard: "{{ _dash_json | combine({'id': None, 'version': None}) }}"
+          folderUid: "{{ _dash.folder_uid }}"
+          overwrite: true
+        status_code: [200]
+      changed_when: true
+
+  rescue:
+    - name: "Record failure for {{ _dash.file }}"
+      ansible.builtin.set_fact:
+        _deploy_failures: "{{ _deploy_failures + [_dash.file] }}"
+
+    - name: "Show deploy error — {{ _dash.file }}"
+      ansible.builtin.debug:
+        msg: "Failed to deploy {{ _dash.file }}: {{ ansible_failed_result.msg | default('see error above') }}"

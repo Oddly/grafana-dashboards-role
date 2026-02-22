@@ -8,9 +8,24 @@
          | flatten
          | list }}
 
+- name: Show dashboards to deploy
+  ansible.builtin.debug:
+    msg: "Deploying {{ _all_dashboards | length }} dashboards: {{ _all_dashboards | map(attribute='file') | list }}"
+
+- name: Initialise failure tracker
+  ansible.builtin.set_fact:
+    _deploy_failures: []
+
 - name: Deploy each dashboard
   ansible.builtin.include_tasks: _deploy_one.yml
   loop: "{{ _all_dashboards }}"
   loop_control:
     loop_var: _dash
     label: "{{ _dash.file }}"
+
+- name: Report deployment failures
+  ansible.builtin.fail:
+    msg: >-
+      {{ _deploy_failures | length }} dashboard(s) failed to deploy:
+      {{ _deploy_failures | join(', ') }}
+  when: (_deploy_failures | length) > 0

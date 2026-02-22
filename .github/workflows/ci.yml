@@ -1,0 +1,113 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lint tools
+        run: pip install ansible-core ansible-lint yamllint
+
+      - name: Run yamllint
+        run: yamllint .
+
+      - name: Run ansible-lint
+        run: ansible-lint
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout dashboard repos
+        run: |
+          cd ..
+          for repo in elasticsearch logstash grafana linux network security; do
+            git clone --depth 1 https://github.com/Oddly/dashboards-${repo}.git
+          done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible
+        run: pip install ansible-core
+
+      - name: Start Grafana
+        run: |
+          docker run -d --name grafana -p 3000:3000 \
+            -e GF_SECURITY_ADMIN_PASSWORD=admin \
+            -e GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource \
+            grafana/grafana:latest
+
+      - name: Wait for Grafana
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Grafana ready"
+              break
+            fi
+            sleep 2
+          done
+          curl -sf http://localhost:3000/api/health
+
+      - name: Deploy all dashboards
+        run: ansible-playbook tests/test.yml -v
+
+      - name: Verify full deployment
+        run: tests/verify.sh
+
+  selective:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout required dashboard repos
+        run: |
+          cd ..
+          for repo in elasticsearch linux; do
+            git clone --depth 1 https://github.com/Oddly/dashboards-${repo}.git
+          done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible
+        run: pip install ansible-core
+
+      - name: Start Grafana
+        run: |
+          docker run -d --name grafana -p 3000:3000 \
+            -e GF_SECURITY_ADMIN_PASSWORD=admin \
+            grafana/grafana:latest
+
+      - name: Wait for Grafana
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
+              echo "Grafana ready"
+              break
+            fi
+            sleep 2
+          done
+          curl -sf http://localhost:3000/api/health
+
+      - name: Deploy selective (elasticsearch + linux)
+        run: ansible-playbook tests/test_selective.yml -v
+
+      - name: Verify selective deployment
+        run: tests/verify_selective.sh

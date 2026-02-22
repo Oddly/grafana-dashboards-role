@@ -3,6 +3,35 @@
   ansible.builtin.include_vars:
     file: dashboards.yml
 
+- name: Load palette definitions
+  ansible.builtin.include_vars:
+    file: palettes.yml
+
+- name: Validate Grafana is reachable
+  ansible.builtin.uri:
+    url: "{{ grafana_url }}/api/health"
+    method: GET
+    status_code: [200]
+  check_mode: false
+  changed_when: false
+
+- name: Validate Elasticsearch password is set
+  ansible.builtin.assert:
+    that:
+      - elasticsearch_password | length > 0
+    fail_msg: "elasticsearch_password must not be empty"
+    quiet: true
+
+- name: Validate palette name
+  ansible.builtin.assert:
+    that:
+      - grafana_dashboards_palette in _palettes
+    fail_msg: >-
+      Unknown palette "{{ grafana_dashboards_palette }}".
+      Available: {{ _palettes.keys() | list | join(', ') }}
+    quiet: true
+  when: grafana_dashboards_palette | length > 0
+
 - name: Set auth header (API key takes precedence)
   ansible.builtin.set_fact:
     _grafana_auth_header: >-
@@ -24,6 +53,11 @@
 - name: Show enabled services
   ansible.builtin.debug:
     msg: "Enabled services: {{ _enabled_services }}"
+
+- name: Show palette
+  ansible.builtin.debug:
+    msg: "Palette: {{ grafana_dashboards_palette | default('(source colours)', true) }}"
+  when: grafana_dashboards_palette | length > 0
 
 - name: Create datasources
   ansible.builtin.include_tasks: datasources.yml

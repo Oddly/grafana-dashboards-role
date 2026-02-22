@@ -1,0 +1,22 @@
+---
+- name: Deploy elasticsearch and linux dashboards
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: "{{ playbook_dir }}/.."
+      vars:
+        grafana_url: "http://localhost:3000"
+        grafana_auth: "admin:admin"
+        elasticsearch_url: "http://localhost:9200"
+        elasticsearch_password: "testpassword"
+        elasticsearch_tls_skip_verify: true
+        grafana_dashboards_path: "{{ playbook_dir }}/../.."
+        grafana_dashboards_elasticsearch: true
+        grafana_dashboards_logstash: false
+        grafana_dashboards_grafana: false
+        grafana_dashboards_linux: true
+        grafana_dashboards_network: false
+        grafana_dashboards_netflow: false
+        grafana_dashboards_security: false
+        grafana_dashboards_infinity: false

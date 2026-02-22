@@ -8,6 +8,7 @@ grafana_api_key: ""
 elasticsearch_url: "https://localhost:9200"
 elasticsearch_user: "elastic"
 elasticsearch_password: ""
+elasticsearch_version: "8.0.0"
 elasticsearch_tls_skip_verify: false
 elasticsearch_index_pattern: "metrics-*,logs-*"
 
@@ -21,20 +22,23 @@ infinity_elasticsearch_password: "{{ elasticsearch_password }}"
 infinity_elasticsearch_tls_skip_verify: "{{ elasticsearch_tls_skip_verify }}"
 infinity_logstash_url: "http://localhost:9600"
 infinity_grafana_url: "{{ grafana_url }}"
-infinity_grafana_user: "{{ grafana_auth.split(':')[0] }}"
-infinity_grafana_password: "{{ grafana_auth.split(':')[1] }}"
-
-# Health detection: minutes without data before showing "unknown"
-health_stale_minutes: 5
+infinity_grafana_user: "{{ grafana_auth.split(':', 1)[0] }}"
+infinity_grafana_password: "{{ grafana_auth.split(':', 1)[1] | default('') }}"
 
 # Path to parent directory containing dashboards-<service>/ repos
 grafana_dashboards_path: "{{ playbook_dir }}/.."
 
-# Service toggles
+# Colour palette — leave empty to deploy source colours unchanged.
+# Set to a palette name to recolour dashboards at deploy time.
+# Options: paul-tol-bright, paul-tol-vibrant, paul-tol-muted,
+#          okabe-ito, grafana-classic
+grafana_dashboards_palette: ""
+
+# Service toggles — each controls a group of dashboards independently
 grafana_dashboards_elasticsearch: true
 grafana_dashboards_logstash: true
 grafana_dashboards_grafana: true
 grafana_dashboards_linux: true
 grafana_dashboards_network: true
-grafana_dashboards_netflow: false
+grafana_dashboards_netflow: false  # NT-05 requires a separate NetFlow/IPFIX data source
 grafana_dashboards_security: true

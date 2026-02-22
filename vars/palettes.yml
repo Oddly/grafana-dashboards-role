@@ -1,0 +1,58 @@
+---
+# Colour palettes for dashboard deployment.
+#
+# The source dashboards ship with paul-tol-bright.  Setting
+# grafana_dashboards_palette to any other name causes a hex-to-hex
+# replacement at deploy time — no external tools required.
+#
+# Available palettes:
+#   paul-tol-bright   — colourblind-friendly, high contrast (default in source)
+#   paul-tol-vibrant  — bolder, saturated variant
+#   paul-tol-muted    — softer, pastel variant
+#   okabe-ito         — widely used colourblind-safe palette
+#   grafana-classic   — Grafana's default named-colour equivalents
+
+_palettes:
+  paul-tol-bright:
+    blue: "#4477AA"
+    cyan: "#66CCEE"
+    green: "#228833"
+    yellow: "#CCBB44"
+    red: "#EE6677"
+    purple: "#AA3377"
+    grey: "#BBBBBB"
+  paul-tol-vibrant:
+    blue: "#0077BB"
+    cyan: "#33BBEE"
+    green: "#009988"
+    yellow: "#EE7733"
+    red: "#CC3311"
+    purple: "#EE3377"
+    grey: "#BBBBBB"
+  paul-tol-muted:
+    blue: "#332288"
+    cyan: "#88CCEE"
+    green: "#44AA99"
+    yellow: "#DDCC77"
+    red: "#CC6677"
+    purple: "#AA4499"
+    grey: "#DDDDDD"
+  okabe-ito:
+    blue: "#0072B2"
+    cyan: "#56B4E9"
+    green: "#009E73"
+    yellow: "#E69F00"
+    red: "#D55E00"
+    purple: "#CC79A7"
+    grey: "#999999"
+  grafana-classic:
+    blue: "#5794F2"
+    cyan: "#8AB8FF"
+    green: "#73BF69"
+    yellow: "#FADE2A"
+    red: "#F2495C"
+    purple: "#B877D9"
+    grey: "#8e8e8e"
+
+# Source palette used in the shipped JSON files
+_source_palette: "{{ _palettes['paul-tol-bright'] }}"

@@ -1,0 +1,16 @@
+---
+- name: Deploy all dashboards
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: "{{ playbook_dir }}/.."
+      vars:
+        grafana_url: "http://localhost:3000"
+        grafana_auth: "admin:admin"
+        elasticsearch_url: "http://localhost:9200"
+        elasticsearch_password: "testpassword"
+        elasticsearch_tls_skip_verify: true
+        grafana_dashboards_path: "{{ playbook_dir }}/../.."
+        grafana_dashboards_infinity: true
+        grafana_dashboards_netflow: true
